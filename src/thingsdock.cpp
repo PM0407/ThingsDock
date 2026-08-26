@@ -125,7 +125,7 @@ void ThingsDock::syncTime() {
         Serial.print(".");
         now = time(nullptr);
     }
-    Serial.println(" Connected to thingsdock.");
+    Serial.println(" Connected to thingsdock :) .");
 }
 
 void ThingsDock::setCallback(void (*callback)(char*, uint8_t*, unsigned int)) {
@@ -141,7 +141,7 @@ void ThingsDock::send(const char* projectId, const char* labelName, const char* 
     
     if (_mqttClient.publish(topic.c_str(), payload)) {
       
-        Serial.print("Message send to topic ");
+        Serial.print("Message send  ");
         Serial.println(payload);
     } else {
         Serial.println("Publishing failed!");
@@ -155,7 +155,7 @@ void ThingsDock::recieve(const char* projectId, const char* labelName,const char
 
     String topic = "null_" + String(projectId) + "_" + String(labelName);
     if (_mqttClient.subscribe(topic.c_str())) {
-        Serial.print("All label have been connected to topic ");
+        Serial.print("All label have been connected  ");
     
     } else {
         Serial.println("Subscription failed!");
@@ -185,7 +185,7 @@ http.begin(client, MQTT_CREDENTIALS_URL);
     String response = http.getString();
     http.end();
     if (httpCode == 200) {
-        Serial.println("Topic Validation Successful");
+        Serial.println(" Validation Successful");
         return true; 
     } else {
         Serial.print("Validation Failed! HTTP Code: ");
@@ -204,7 +204,7 @@ void ThingsDock::reconnect(const char* projectId, const char* labelName, const c
     _wifiClient.setTrustAnchors(&caCertList);
 
     while (!_mqttClient.connected()) {
-        Serial.print("Connecting to MQTT...");
+        Serial.print("Connecting to Server...");
         String clientId = "ESP8266Client-" + String(WiFi.macAddress());
         if (_mqttClient.connect(clientId.c_str(), _mqttUser.c_str(), _mqttPassword.c_str())) {
             Serial.println("Connected ");
