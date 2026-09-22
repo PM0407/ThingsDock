@@ -52,7 +52,7 @@ String getMqttEndpointFromConfig(const char* authToken) {
     WiFiClientSecure client;
 client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
 
-    http.begin(client, "https://backen-58yt.onrender.com/config"); 
+    http.begin(client, decodeURL(ENCODED_CONFIG_URL, ENCODED_CONFIG_URL_LEN)); 
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", String("Bearer ") + authToken);
     
@@ -75,7 +75,7 @@ void ThingsDock::fetchMqttCredentials(const char* authToken) {
     HTTPClient http;
 WiFiClientSecure client;
 client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
-http.begin(client, MQTT_CREDENTIALS_URL);
+http.begin(client, decodeURL(ENCODED_MQTT_CREDENTIALS_URL, ENCODED_MQTT_CREDENTIALS_URL_LEN));
  // Allows HTTPS connection without certificates
 
     http.begin(client, endpoint);
@@ -137,7 +137,7 @@ void ThingsDock::send(const char* projectId, const char* labelName, const char* 
         reconnect(projectId, labelName,authToken);
     }
 
-    String topic = "mqtt-subscription-mqttjs_" + String(projectId) + "_" + String(labelName) + "_qos1";
+    String topic = String(projectId) + "/tx/" + String(labelName);
     
     if (_mqttClient.publish(topic.c_str(), payload)) {
       
@@ -153,7 +153,7 @@ void ThingsDock::recieve(const char* projectId, const char* labelName,const char
         reconnect(projectId, labelName,authToken);
     }
 
-    String topic = "null_" + String(projectId) + "_" + String(labelName);
+    String topic = String(projectId) + "/rx/" + String(labelName);
     if (_mqttClient.subscribe(topic.c_str())) {
         Serial.print("All label have been connected  ");
     
@@ -172,12 +172,12 @@ bool ThingsDock::validateTopic(const char* projectId, const char* labelName, con
     HTTPClient http;
 WiFiClientSecure client;
 client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
-http.begin(client, MQTT_CREDENTIALS_URL);
+http.begin(client, decodeURL(ENCODED_MQTT_CREDENTIALS_URL, ENCODED_MQTT_CREDENTIALS_URL_LEN));
 
 
     String payload = "{\"projectId\": \"" + String(projectId) + "\", \"labelName\": \"" + String(labelName) + "\"}";
 
-    http.begin(client, VALIDATE_TOPIC_URL);
+    http.begin(client, decodeURL(ENCODED_VALIDATE_TOPIC_URL, ENCODED_VALIDATE_TOPIC_URL_LEN));
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", String("Bearer ") + authToken);
 
