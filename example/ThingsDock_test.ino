@@ -12,6 +12,9 @@ const char* authToken = "AUTH_TOKEN";
 ThingsDock thingsdock;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 const int sensorPin = 0;   
+#ifndef LED_BUILTIN
+  #define LED_BUILTIN 2
+#endif
 const int ledPin = LED_BUILTIN; 
 unsigned long lastPublishTime = 0;
 const unsigned long publishInterval = 5000; 
