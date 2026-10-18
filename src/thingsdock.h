@@ -1,10 +1,19 @@
 #ifndef THINGSDOCK_H
 #define THINGSDOCK_H
 
+#if defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <WiFiClientSecure.h>
+    #include <BearSSLHelpers.h>
+#elif defined(ESP32)
+    #include <WiFi.h>
+    #include <WiFiClientSecure.h>
+#else
+    #include <WiFiClientSecure.h>
+#endif
+
 #include <PubSubClient.h>
-#include <WiFiClientSecure.h>
 #include <time.h>
-#include <BearSSLHelpers.h>
 
 class ThingsDock {
 public:
