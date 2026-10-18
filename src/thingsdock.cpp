@@ -1,8 +1,14 @@
 #include "thingsdock.h"
 #include "config.h"  // Include the config file
-#include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
-#include <ESP8266HTTPClient.h>
+
+#if defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <ESP8266HTTPClient.h>
+#elif defined(ESP32)
+    #include <WiFi.h>
+    #include <HTTPClient.h>
+#endif
 static const char ca_cert[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh
@@ -50,7 +56,12 @@ ThingsDock::ThingsDock() : _mqttClient(_wifiClient) {}
 String getMqttEndpointFromConfig(const char* authToken) {
     HTTPClient http;
     WiFiClientSecure client;
-client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
+#if defined(ESP8266)
+    static BearSSL::X509List cert1(ca_cert1);
+    client.setTrustAnchors(&cert1);
+#elif defined(ESP32)
+    client.setCACert(ca_cert1);
+#endif
 
     http.begin(client, decodeURL(ENCODED_CONFIG_URL, ENCODED_CONFIG_URL_LEN)); 
     http.addHeader("Content-Type", "application/json");
@@ -73,10 +84,13 @@ void ThingsDock::fetchMqttCredentials(const char* authToken) {
         String endpoint = getMqttEndpointFromConfig(authToken);
     if (endpoint == "") return;
     HTTPClient http;
-WiFiClientSecure client;
-client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
-http.begin(client, decodeURL(ENCODED_MQTT_CREDENTIALS_URL, ENCODED_MQTT_CREDENTIALS_URL_LEN));
- // Allows HTTPS connection without certificates
+    WiFiClientSecure client;
+#if defined(ESP8266)
+    static BearSSL::X509List cert1(ca_cert1);
+    client.setTrustAnchors(&cert1);
+#elif defined(ESP32)
+    client.setCACert(ca_cert1);
+#endif
 
     http.begin(client, endpoint);
     http.addHeader("Content-Type", "application/json");
@@ -111,8 +125,12 @@ void ThingsDock::begin(const char* ssid, const char* password, const char* authT
 
     syncTime();
     fetchMqttCredentials(authToken); 
-    BearSSL::X509List* caCertList = new BearSSL::X509List(ca_cert);
-    _wifiClient.setTrustAnchors(caCertList);
+#if defined(ESP8266)
+    static BearSSL::X509List caCertList(ca_cert);
+    _wifiClient.setTrustAnchors(&caCertList);
+#elif defined(ESP32)
+    _wifiClient.setCACert(ca_cert);
+#endif
 
     _mqttClient.setServer(_mqttServer.c_str(), _mqttPort);
 }
@@ -171,8 +189,12 @@ void ThingsDock::loop(const char* projectId, const char* labelName,const char* a
 bool ThingsDock::validateTopic(const char* projectId, const char* labelName, const char* authToken) {
     HTTPClient http;
 WiFiClientSecure client;
-client.setTrustAnchors(new BearSSL::X509List(ca_cert1));
-http.begin(client, decodeURL(ENCODED_MQTT_CREDENTIALS_URL, ENCODED_MQTT_CREDENTIALS_URL_LEN));
+#if defined(ESP8266)
+    static BearSSL::X509List cert1(ca_cert1);
+    client.setTrustAnchors(&cert1);
+#elif defined(ESP32)
+    client.setCACert(ca_cert1);
+#endif
 
 
     String payload = "{\"projectId\": \"" + String(projectId) + "\", \"labelName\": \"" + String(labelName) + "\"}";
@@ -200,12 +222,22 @@ void ThingsDock::reconnect(const char* projectId, const char* labelName, const c
         return;
     }
 
+#if defined(ESP8266)
     static BearSSL::X509List caCertList(ca_cert);
     _wifiClient.setTrustAnchors(&caCertList);
+#elif defined(ESP32)
+    _wifiClient.setCACert(ca_cert);
+#endif
 
     while (!_mqttClient.connected()) {
         Serial.print("Connecting to Server...");
+#if defined(ESP8266)
         String clientId = "ESP8266Client-" + String(WiFi.macAddress());
+#elif defined(ESP32)
+        String clientId = "ESP32Client-" + String(WiFi.macAddress());
+#else
+        String clientId = "Client-" + String(WiFi.macAddress());
+#endif
         if (_mqttClient.connect(clientId.c_str(), _mqttUser.c_str(), _mqttPassword.c_str())) {
             Serial.println("Connected ");
         } else {
